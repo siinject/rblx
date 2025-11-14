@@ -1,4 +1,4 @@
--- Auto Walk + Fast Run + UI Script
+-- Auto Walk + Fast Run + UI Script with Money Giving Feature
 
 local Player = game.Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
@@ -7,10 +7,32 @@ local PlayerGui = Player:WaitForChild("PlayerGui")
 local normalSpeed = 16
 local fastSpeed = 50
 local isRunning = false
+local moneyToGive = 100  -- Amount of money to give each time
 
 -- Wait for character
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
+
+-- Leaderstats Setup (if not already set)
+local function setupLeaderstats()
+    local leaderstats = Player:FindFirstChild("leaderstats")
+    if not leaderstats then
+        leaderstats = Instance.new("Folder")
+        leaderstats.Name = "leaderstats"
+        leaderstats.Parent = Player
+    end
+
+    -- Create Money stat if it doesn't exist
+    local money = leaderstats:FindFirstChild("Money")
+    if not money then
+        money = Instance.new("IntValue")
+        money.Name = "Money"
+        money.Parent = leaderstats
+        money.Value = 0  -- Initialize money with 0
+    end
+end
+
+setupLeaderstats()
 
 -- UI Setup
 local screenGui = Instance.new("ScreenGui")
@@ -29,23 +51,29 @@ toggleButton.Parent = screenGui
 
 -- Functions
 local function toggleRun()
-	if isRunning then
-		Humanoid.WalkSpeed = normalSpeed
-		toggleButton.Text = "Toggle Fast Run"
-	else
-		Humanoid.WalkSpeed = fastSpeed
-		toggleButton.Text = "Running FAST"
-	end
-	isRunning = not isRunning
+    if isRunning then
+        Humanoid.WalkSpeed = normalSpeed
+        toggleButton.Text = "Toggle Fast Run"
+    else
+        Humanoid.WalkSpeed = fastSpeed
+        toggleButton.Text = "Running FAST"
+        
+        -- Give money when running fast
+        local money = Player.leaderstats and Player.leaderstats:FindFirstChild("Money")
+        if money then
+            money.Value = money.Value + moneyToGive  -- Add money to player
+        end
+    end
+    isRunning = not isRunning
 end
 
 -- Auto Walk
 task.spawn(function()
-	while task.wait(0.1) do
-		if Humanoid and Humanoid.Health > 0 then
-			Humanoid:Move(Vector3.new(0, 0, 1))
-		end
-	end
+    while task.wait(0.1) do
+        if Humanoid and Humanoid.Health > 0 then
+            Humanoid:Move(Vector3.new(0, 0, 1))  -- Move player forward
+        end
+    end
 end)
 
 -- Button click
@@ -53,7 +81,7 @@ toggleButton.MouseButton1Click:Connect(toggleRun)
 
 -- Optional: Spacebar toggle
 game:GetService("UserInputService").InputBegan:Connect(function(input)
-	if input.KeyCode == Enum.KeyCode.Space then
-		toggleRun()
-	end
+    if input.KeyCode == Enum.KeyCode.Space then
+        toggleRun()
+    end
 end)

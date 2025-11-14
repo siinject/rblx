@@ -1,87 +1,134 @@
--- Auto Walk + Fast Run + UI Script with Money Giving Feature
+--// Rayfield Loader (customizable URL)
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
-local Player = game.Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+--// Customizable Window Name
+local WindowName = "My Custom Roblox Hub" -- Change this to your desired window name
 
--- Settings
-local normalSpeed = 16
-local fastSpeed = 50
-local isRunning = false
-local moneyToGive = 100  -- Amount of money to give each time
+--// Create Window with customizable name
+local Window = Rayfield:CreateWindow({
+   Name = WindowName,  -- Set the window name
+   Icon = 0,            -- Set the window icon (0 = no icon)
+   LoadingTitle = "Loading Hub...",
+   LoadingSubtitle = "by siinject",
+   Theme = "Default",   -- Choose your theme
+   ShowText = "Rayfield", -- Mobile users can toggle Rayfield UI using "Rayfield" text
+   ToggleUIKeybind = "K", -- Key to toggle UI visibility (press K to show/hide)
 
--- Wait for character
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "MyHub", -- Folder for config files
+      FileName = "Config"   -- Config file name
+   },
 
--- Leaderstats Setup (if not already set)
-local function setupLeaderstats()
-    local leaderstats = Player:FindFirstChild("leaderstats")
-    if not leaderstats then
-        leaderstats = Instance.new("Folder")
-        leaderstats.Name = "leaderstats"
-        leaderstats.Parent = Player
-    end
+   Discord = {
+      Enabled = true,
+      Invite = "yourdiscordlink", -- Set your Discord invite link here
+      RememberJoins = true
+   },
 
-    -- Create Money stat if it doesn't exist
-    local money = leaderstats:FindFirstChild("Money")
-    if not money then
-        money = Instance.new("IntValue")
-        money.Name = "Money"
-        money.Parent = leaderstats
-        money.Value = 0  -- Initialize money with 0
-    end
+   KeySystem = false -- Set to true if you want a key system
+})
+
+--// Create Tabs
+local MainTab = Window:CreateTab("Main", 4483362458)  -- Tab for general features
+local SettingsTab = Window:CreateTab("Settings", 4483362458)  -- Settings tab
+
+--// Create Sections
+local MainSection = MainTab:CreateSection("Main Features")
+local SettingsSection = SettingsTab:CreateSection("Adjust Settings")
+
+--// Button Example
+MainTab:CreateButton({
+   Name = "Open Feature",
+   Callback = function()
+      Rayfield:Notify({
+         Title = "Feature Opened",
+         Content = "You have opened a feature!",
+         Duration = 4,
+         Image = 4483362458
+      })
+   end,
+})
+
+--// Toggle Example
+MainTab:CreateToggle({
+   Name = "Enable Auto-Farm",
+   CurrentValue = false,
+   Flag = "AutoFarmToggle",
+   Callback = function(Value)
+      if Value then
+         print("Auto-Farm Enabled")
+         Rayfield:Notify({
+            Title = "Auto-Farm Enabled",
+            Content = "Auto-farming is now active!",
+            Duration = 4
+         })
+      else
+         print("Auto-Farm Disabled")
+         Rayfield:Notify({
+            Title = "Auto-Farm Disabled",
+            Content = "Auto-farming is now inactive.",
+            Duration = 4
+         })
+      end
+   end,
+})
+
+--// Slider Example
+MainTab:CreateSlider({
+   Name = "Speed Adjustment",
+   Range = {1, 100},  -- Min and Max range values
+   Increment = 1,     -- Increment step (slider movement step)
+   Suffix = "Speed",  -- Suffix text displayed (e.g., "Speed")
+   CurrentValue = 50, -- Default value when the slider is initialized
+   Flag = "SpeedSlider", -- Unique identifier for saving the value
+   Callback = function(Value)
+      print("Speed adjusted to:", Value)
+   end,
+})
+
+--// Input Field Example
+SettingsTab:CreateInput({
+   Name = "Enter Username",
+   PlaceholderText = "Type here...",
+   RemoveTextAfterFocusLost = true, -- Remove text when focus is lost
+   Callback = function(Text)
+      print("User entered:", Text)
+   end,
+})
+
+--// Keybind Example
+SettingsTab:CreateKeybind({
+   Name = "Toggle Feature",
+   CurrentKeybind = "P",  -- Default keybind
+   HoldToInteract = false, -- Whether the keybind requires holding
+   Flag = "Keybind1",  -- Unique identifier for saving the keybind
+   Callback = function(Keybind)
+      Rayfield:Notify({
+         Title = "Keybind Pressed!",
+         Content = "You pressed: " .. tostring(Keybind),
+         Duration = 3
+      })
+   end,
+})
+
+--// Notification Example (on load)
+Rayfield:Notify({
+   Title = "Welcome to My Hub",
+   Content = "Your custom Roblox Hub is now loaded!",
+   Duration = 5
+})
+
+--// More Features (for example, loading game-specific scripts based on game ID)
+local GameId = game.PlaceId
+if GameId == 2753915549 then -- Blox Fruits game ID
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/siinject/scripts/main/bloxfruits.lua"))()
+elseif GameId == 6403373529 then -- BedWars game ID
+   loadstring(game:HttpGet("https://raw.githubusercontent.com/siinject/scripts/main/bedwars.lua"))()
+else
+   Rayfield:Notify({
+      Title = "Game Not Supported",
+      Content = "This game is not currently supported by this hub.",
+      Duration = 4
+   })
 end
-
-setupLeaderstats()
-
--- UI Setup
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "RunUI"
-screenGui.Parent = PlayerGui
-
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 200, 0, 50)
-toggleButton.Position = UDim2.new(0, 10, 0, 10)
-toggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleButton.Font = Enum.Font.GothamBold
-toggleButton.TextSize = 18
-toggleButton.Text = "Toggle Fast Run"
-toggleButton.Parent = screenGui
-
--- Functions
-local function toggleRun()
-    if isRunning then
-        Humanoid.WalkSpeed = normalSpeed
-        toggleButton.Text = "Toggle Fast Run"
-    else
-        Humanoid.WalkSpeed = fastSpeed
-        toggleButton.Text = "Running FAST"
-        
-        -- Give money when running fast
-        local money = Player.leaderstats and Player.leaderstats:FindFirstChild("Money")
-        if money then
-            money.Value = money.Value + moneyToGive  -- Add money to player
-        end
-    end
-    isRunning = not isRunning
-end
-
--- Auto Walk
-task.spawn(function()
-    while task.wait(0.1) do
-        if Humanoid and Humanoid.Health > 0 then
-            Humanoid:Move(Vector3.new(0, 0, 1))  -- Move player forward
-        end
-    end
-end)
-
--- Button click
-toggleButton.MouseButton1Click:Connect(toggleRun)
-
--- Optional: Spacebar toggle
-game:GetService("UserInputService").InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.Space then
-        toggleRun()
-    end
-end)
